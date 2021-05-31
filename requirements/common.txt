@@ -1,0 +1,6 @@
+django~=3.1.0
+{% comment %} djangorestframework
+djangorestframework-jwt
+django-cors-headers
+django-pydenticon
+pillow {% endcomment %}
