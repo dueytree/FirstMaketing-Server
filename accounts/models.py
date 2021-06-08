@@ -1,13 +1,13 @@
 from django.db import models
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.core.validators import RegexValidator
 from django.db import models
-from django.shortcuts import resolve_url
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 
-class User(AbstractUser):
+class ReviewUser(AbstractBaseUser, PermissionsMixin):
     class GenderChoices(models.TextChoices):
         MALE = "M", "남성"
         FEMALE = "F", "여성"
@@ -20,11 +20,18 @@ class User(AbstractUser):
         농협 = "농협은행"
         카카오 = "카카오뱅크"
 
-    full_name = models.CharField(max_length=20)
-    avatar = models.ImageField(
-        blank=True,
-        upload_to="accounts/avatar/%Y/%m/%d",
-        help_text="png/jpg 파일을 업로드 해주세요.",
+    username_validator = UnicodeUsernameValidator()
+    objects = UserManager()
+
+    username = models.CharField(
+        "username",
+        max_length=50,
+        blank=False,
+        unique=True,
+        help_text=(
+            "Required. 50 characters or fewer. Letters, digits and @/./+/-/_ only."
+        ),
+        validators=[username_validator],
     )
     account_number = models.IntegerField(default=0)
     gender = models.CharField(max_length=1, choices=GenderChoices.choices)
@@ -33,14 +40,13 @@ class User(AbstractUser):
         blank=True,
         validators=[RegexValidator(r"^010-?[1-9]\d{3}-?\d{4}$")],
     )
-    email = models.EmailField(unique=True)
-    second_email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, max_length=50)
+    second_email = models.EmailField(unique=True, blank=True)
     bank = models.CharField(max_length=10, choices=BankChoices.choices)
     bank_number = models.CharField(max_length=20)
 
-    @property
-    def avatar_url(self):
-        if self.avatar:
-            return self.avatar.url
-        else:
-            return resolve_url("pydenticon_image", self.username)  # TODO: username?
+    comments = models.CharField(max_length=30, blank=True)
+    is_staff = models.BooleanField(default=False)
+
+    EMAIL_FIELD = "email"
+    USERNAME_FIELD = "username"
